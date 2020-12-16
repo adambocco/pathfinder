@@ -46,6 +46,7 @@ let drawingBorder = false;
 let erasingBorder = false;
 let lastMin = [-1,-1,-1]
 let par = null;
+let fastDijkstra = true;
 
 function setup() {
   createCanvas(700, 700);
@@ -75,7 +76,7 @@ function setup() {
   eraseBorderButton.position(520, 20)
   eraseBorderButton.mousePressed(eraseBorder)
 
-  speedSlider = createSlider(0, 10, 8, 1)
+  speedSlider = createSlider(0, 100, 60, 1)
   speedSlider.position(100,660) 
 
   drawSlider = createSlider(1, 3, 2, 1)
@@ -105,8 +106,18 @@ function draw() {
       console.log("ERR", err, "\n lastTouched: ",lastTouched)
     }
   }
+  fill(0,0,0)
   text("Speed: "+speedSlider.value(), 140, 692)
   text("Draw Size: "+ drawSlider.value(), 385, 692)
+  if (speedSlider.value() < 50) {
+    fastDijkstra = false;
+    frameRate(10+speedSlider.value())
+  }
+  else {
+    fastDijkstra = true;
+    frameRate(60)
+    processLimit = speedSlider.value()-50
+  }
 }
 
 function reset() {

@@ -15,7 +15,11 @@ function runDijkstra() {
                 else if (dijkstraWhile) {
                     processDijkstra()
                 } else if (dijkstraFor) {
-                    relaxDijkstra()
+                    if (fastDijkstra) {
+                        relaxDijkstraFast()
+                    } else {
+                        relaxDijkstraSlow()
+                    }
                 }
             } else {
                 currentAlgorithm = null;
@@ -68,6 +72,7 @@ function setupDijkstra() {
             blocked[i].push(false)
         }
     }
+    ltc = [50,250,100]
 }
 
 function processDijkstra() {
@@ -84,7 +89,102 @@ function processDijkstra() {
     dijkstraFor = true;
 }
 
-function relaxDijkstra() {
+function relaxDijkstraSlow() {
+    if (dijkstraI == 8) {
+        dijkstraFor = false
+        dijkstraWhile = true
+        rVar -= rIncr;
+        gVar -= gIncr;
+        bVar -= bIncr;
+        dijkstraI = 0
+    }
+    else {
+        try {
+            switch (dijkstraI) {
+                case 0:
+                    if (blocked[u[0] + 1][u[1]]) { break; }
+                    colors[u[0] + 1][u[1]] = [rVar, gVar, bVar];
+                    if (pq[u[0] + 1][u[1]] > (pq[u[0]][u[1]]) + 1) {
+                        pq[u[0] + 1][u[1]] = (pq[u[0]][u[1]]) + 1
+                        pi[u[0] + 1][u[1]] = [u[0], u[1]]
+                        lastTouched = [u[0] + 1, u[1]]
+                    }
+                    break;
+                case 1:
+                    if (blocked[u[0] - 1][u[1]]) { break; }
+                    colors[u[0] - 1][u[1]] = [rVar, gVar, bVar];
+                    if (pq[u[0] - 1][u[1]] > (pq[u[0]][u[1]]) + 1) {
+                        pq[u[0] - 1][u[1]] = (pq[u[0]][u[1]]) + 1
+                        pi[u[0] - 1][u[1]] = [u[0], u[1]]
+                        lastTouched = [u[0] - 1, u[1]]
+                    }
+                    break;
+                case 2:
+                    if (blocked[u[0]][u[1] + 1]) { break; }
+                    colors[u[0]][u[1] + 1] = [rVar, gVar, bVar];
+                    if (pq[u[0]][u[1] + 1] > (pq[u[0]][u[1]]) + 1) {
+                        pq[u[0]][u[1] + 1] = (pq[u[0]][u[1]]) + 1
+                        pi[u[0]][u[1] + 1] = [u[0], u[1]]
+                        lastTouched = [u[0], u[1] + 1]
+                    }
+                    break;
+                case 3:
+                    if (blocked[u[0]][u[1] - 1]) { break; }
+                    colors[u[0]][u[1] - 1] = [rVar, gVar, bVar];
+                    if (pq[u[0]][u[1] - 1] > (pq[u[0]][u[1]]) + 1) {
+                        pq[u[0]][u[1] - 1] = (pq[u[0]][u[1]]) + 1
+                        pi[u[0]][u[1] - 1] = [u[0], u[1]]
+                        lastTouched = [u[0], u[1] - 1]
+                    }
+                    break;
+                case 4:
+                    if (blocked[u[0] + 1][u[1] + 1]) { break; }
+                    colors[u[0] + 1][u[1] + 1] = [rVar, gVar, bVar];
+                    if (pq[u[0] + 1][u[1] + 1] > (pq[u[0]][u[1]]) + 1) {
+                        pq[u[0] + 1][u[1] + 1] = (pq[u[0]][u[1]]) + 1.4
+                        pi[u[0] + 1][u[1] + 1] = [u[0], u[1]]
+                        lastTouched = [u[0] + 1, u[1] + 1]
+                    }
+                    break;
+                case 5:
+                    if (blocked[u[0] - 1][u[1] - 1]) { break; }
+                    colors[u[0] - 1][u[1] - 1] = [rVar, gVar, bVar];
+                    if (pq[u[0] - 1][u[1] - 1] > (pq[u[0]][u[1]]) + 1) {
+                        pq[u[0] - 1][u[1] - 1] = (pq[u[0]][u[1]]) + 1.4
+                        pi[u[0] - 1][u[1] - 1] = [u[0], u[1]]
+                        lastTouched = [u[0] - 1, u[1] - 1]
+                    }
+                    break;
+                case 6:
+                    if (blocked[u[0] - 1][u[1] + 1]) { break; }
+                    colors[u[0] - 1][u[1] + 1] = [rVar, gVar, bVar];
+                    if (pq[u[0] - 1][u[1] + 1] > (pq[u[0]][u[1]]) + 1) {
+                        pq[u[0] - 1][u[1] + 1] = (pq[u[0]][u[1]]) + 1.4
+                        pi[u[0] - 1][u[1] + 1] = [u[0], u[1]]
+                        lastTouched = [u[0] - 1, u[1] + 1]
+                    }
+                    break;
+                case 7:
+                    if (blocked[u[0] + 1][u[1] - 1]) { break; }
+                    colors[u[0] + 1][u[1] - 1] = [rVar, gVar, bVar];
+                    if (pq[u[0] + 1][u[1] - 1] > (pq[u[0]][u[1]]) + 1) {
+                        pq[u[0] + 1][u[1] - 1] = (pq[u[0]][u[1]]) + 1.4
+                        pi[u[0] + 1][u[1] - 1] = [u[0], u[1]]
+                        lastTouched = [u[0] + 1, u[1] - 1]
+                    }
+                    break;
+
+            }
+            dijkstraI++;
+        } catch (err) {
+            console.log(err)
+            dijkstraI++;
+        }
+    }
+}
+
+
+function relaxDijkstraFast() {
     dijkstraI = 0
     while (dijkstraI != 8) {
         try {
@@ -95,7 +195,6 @@ function relaxDijkstra() {
                     if (pq[u[0] + 1][u[1]] > (pq[u[0]][u[1]]) + 1) {
                         pq[u[0] + 1][u[1]] = (pq[u[0]][u[1]]) + 1
                         pi[u[0] + 1][u[1]] = [u[0], u[1]]
-                        // lastTouched = [u[0] + 1, u[1]]
                     }
                     break;
                 case 1:
@@ -104,7 +203,6 @@ function relaxDijkstra() {
                     if (pq[u[0] - 1][u[1]] > (pq[u[0]][u[1]]) + 1) {
                         pq[u[0] - 1][u[1]] = (pq[u[0]][u[1]]) + 1
                         pi[u[0] - 1][u[1]] = [u[0], u[1]]
-                        // lastTouched = [u[0] - 1, u[1]]
                     }
                     break;
                 case 2:
@@ -113,7 +211,6 @@ function relaxDijkstra() {
                     if (pq[u[0]][u[1] + 1] > (pq[u[0]][u[1]]) + 1) {
                         pq[u[0]][u[1] + 1] = (pq[u[0]][u[1]]) + 1
                         pi[u[0]][u[1] + 1] = [u[0], u[1]]
-                        // lastTouched = [u[0], u[1] + 1]
                     }
                     break;
                 case 3:
@@ -122,7 +219,6 @@ function relaxDijkstra() {
                     if (pq[u[0]][u[1] - 1] > (pq[u[0]][u[1]]) + 1) {
                         pq[u[0]][u[1] - 1] = (pq[u[0]][u[1]]) + 1
                         pi[u[0]][u[1] - 1] = [u[0], u[1]]
-                        // lastTouched = [u[0], u[1] - 1]
                     }
                     break;
                 case 4:
@@ -131,7 +227,6 @@ function relaxDijkstra() {
                     if (pq[u[0] + 1][u[1] + 1] > (pq[u[0]][u[1]]) + 1) {
                         pq[u[0] + 1][u[1] + 1] = (pq[u[0]][u[1]]) + 1.4
                         pi[u[0] + 1][u[1] + 1] = [u[0], u[1]]
-                        // lastTouched = [u[0] + 1, u[1] + 1]
                     }
                     break;
                 case 5:
@@ -140,7 +235,6 @@ function relaxDijkstra() {
                     if (pq[u[0] - 1][u[1] - 1] > (pq[u[0]][u[1]]) + 1) {
                         pq[u[0] - 1][u[1] - 1] = (pq[u[0]][u[1]]) + 1.4
                         pi[u[0] - 1][u[1] - 1] = [u[0], u[1]]
-                        // lastTouched = [u[0] - 1, u[1] - 1]
                     }
                     break;
                 case 6:
@@ -149,7 +243,6 @@ function relaxDijkstra() {
                     if (pq[u[0] - 1][u[1] + 1] > (pq[u[0]][u[1]]) + 1) {
                         pq[u[0] - 1][u[1] + 1] = (pq[u[0]][u[1]]) + 1.4
                         pi[u[0] - 1][u[1] + 1] = [u[0], u[1]]
-                        // lastTouched = [u[0] - 1, u[1] + 1]
                     }
                     break;
                 case 7:
@@ -158,7 +251,6 @@ function relaxDijkstra() {
                     if (pq[u[0] + 1][u[1] - 1] > (pq[u[0]][u[1]]) + 1) {
                         pq[u[0] + 1][u[1] - 1] = (pq[u[0]][u[1]]) + 1.4
                         pi[u[0] + 1][u[1] - 1] = [u[0], u[1]]
-                        // lastTouched = [u[0] + 1, u[1] - 1]
                     }
                     break;
 
@@ -175,6 +267,7 @@ function relaxDijkstra() {
         bVar -= bIncr;
     }
 }
+
 
 
 function extractMin() {
