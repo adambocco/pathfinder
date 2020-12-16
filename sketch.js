@@ -5,8 +5,8 @@ let rightPadding = 50;
 let topPadding = 50;
 let bottomPadding = 50;
 let sqSize = 11;
-let start = [0, 0];
-let end = [0, 1];
+let start = null;
+let end = null;
 let pq = [];
 let pi = [];
 let u;
@@ -33,14 +33,19 @@ let dropEndButton;
 let droppingEnd = false;
 let currentAlgorithm = null;
 let ltc = [100, 50, 200]
-let baseColor = [130,130,150]
-let blockedColor = [100,80,80]
-let startColor = [100,220,100];
+let baseColor = [130, 130, 150]
+let blockedColor = [100, 80, 80];
+let eraseColor = [160, 160, 180];
+let startColor = [100, 220, 100];
 let endColor = [220, 100, 100];
 let lastBlocked = null;
 let processVar = 0;
-let processLimit = 10;
+let processLimit = 20;
 let finishingDijkstra = false;
+let drawingBorder = false;
+let erasingBorder = false;
+let lastMin = [-1,-1,-1]
+let par = null;
 
 function setup() {
   createCanvas(700, 700);
@@ -70,6 +75,13 @@ function setup() {
   eraseBorderButton.position(520, 20)
   eraseBorderButton.mousePressed(eraseBorder)
 
+  speedSlider = createSlider(0, 10, 8, 1)
+  speedSlider.position(100,660) 
+
+  drawSlider = createSlider(1, 3, 2, 1)
+  drawSlider.position(350,660) 
+
+
   // colors[start[0]][start[1]] = startColor;
   // colors[end[0]][end[1]] = endColor;
 }
@@ -78,13 +90,23 @@ function draw() {
   background(250);
   colorSquares()
   selectSquares()
+  if (start) {
+    fill(...startColor)
+    square(coords[start[0]][start[1]][0], coords[start[0]][start[1]][1], sqSize)
+  }
   if (currentAlgorithm) {
     currentAlgorithm()
   }
   fill(...ltc)
   for (let n = 0; n < lastTouched.length; n++) {
-    square(coords[lastTouched[n][0]][lastTouched[n][1]][0], coords[lastTouched[n][0]][lastTouched[n][1]][1], sqSize)
+    try {
+      square(coords[lastTouched[n][0]][lastTouched[n][1]][0], coords[lastTouched[n][0]][lastTouched[n][1]][1], sqSize)
+    }catch(err) {
+      console.log("ERR", err, "\n lastTouched: ",lastTouched)
+    }
   }
+  text("Speed: "+speedSlider.value(), 140, 692)
+  text("Draw Size: "+ drawSlider.value(), 385, 692)
 }
 
 function reset() {
@@ -121,15 +143,16 @@ function selectSquares() {
       lastTouched = []
       lastTouched.push([sqx, sqy])
       if (mouseIsPressed) {
+        droppingStart ? start = [sqx, sqy] : end = [sqx, sqy]
         droppingStart ? colors[start[0]][start[1]] = baseColor : colors[end[0]][end[1]] = baseColor
-        droppingStart? start = [sqx, sqy] : end = [sqx, sqy]
-        droppingStart? colors[sqx][sqy] = startColor : colors[sqx][sqy] = endColor
+        droppingStart ? colors[sqx][sqy] = startColor : colors[sqx][sqy] = endColor
         droppingStart = false;
         droppingEnd = false;
       }
     }
   }
-  else if (mouseIsPressed) {
+  else if (drawingBorder || erasingBorder) {
+    lastTouched = []
     if (
       mouseX < width - rightPadding &&
       mouseY < height - bottomPadding &&
@@ -137,26 +160,45 @@ function selectSquares() {
       mouseY > topPadding) {
       sqx = parseInt((mouseX - leftPadding) / sqSize)
       sqy = parseInt((mouseY - topPadding) / sqSize)
-      if (!(sqx == start[0] && sqy == start[1]) && !(sqx == end[0] && sqy == end[1]) && !(lastBlocked != null && sqx == lastBlocked[0] && sqy == lastBlocked[1])) {
-        // if (blocked[sqx][sqy]) {
-        //   colors[sqx][sqy] = baseColor;
-        //   blocked[sqx][sqy] = false;
-        // } else {
-          try {
-            colors[sqx][sqy] = blockedColor
-            blocked[sqx][sqy] = true;
-            colors[sqx+1][sqy] = blockedColor
-            blocked[sqx+1][sqy] = true;
-            colors[sqx-1][sqy] = blockedColor
-            blocked[sqx-1][sqy] = true;
-            colors[sqx][sqy+1] = blockedColor
-            blocked[sqx][sqy+1] = true;
-            colors[sqx][sqy-1] = blockedColor
-            blocked[sqx][sqy-1] = true;
-          }catch (err) {console.log(err)}
-        // }
-        lastBlocked = [sqx, sqy]
-      }
+      try {
+        let drawSize = drawSlider.value();
+        if (mouseIsPressed) {
+          let b = drawingBorder ? true : false;
+          let c = drawingBorder ? blockedColor : baseColor;
+          colors[sqx][sqy] = c
+          blocked[sqx][sqy] = b;
+          if (drawSize > 1) {
+            colors[sqx + 1][sqy] = c
+            blocked[sqx + 1][sqy] = b;
+            colors[sqx - 1][sqy] = c
+            blocked[sqx - 1][sqy] = b;
+            colors[sqx][sqy + 1] = c
+            blocked[sqx][sqy + 1] = b;
+            colors[sqx][sqy - 1] = c
+            blocked[sqx][sqy - 1] = b;
+          }
+          if (drawSize>2) {
+            colors[sqx + 1][sqy+1] = c
+            blocked[sqx + 1][sqy+1] = b;
+            colors[sqx - 1][sqy+1] = c
+            blocked[sqx - 1][sqy+1] = b;
+            colors[sqx+1][sqy - 1] = c
+            blocked[sqx+1][sqy - 1] = b;
+            colors[sqx-1][sqy - 1] = c
+            blocked[sqx-1][sqy - 1] = b;
+          }
+        }
+          lastTouched.push([sqx,sqy])
+          if (drawSize > 1) {
+            lastTouched.push([sqx + 1, sqy], [sqx - 1, sqy], [sqx, sqy + 1], [sqx, sqy - 1])
+          }
+          if (drawSize > 2) {
+            lastTouched.push([sqx + 1, sqy+1], [sqx - 1, sqy+1], [sqx -1, sqy -1], [sqx+1, sqy - 1])
+          }
+      } catch (err) { console.log(err) }
+    }
+    else {
+      lastTouched = [];
     }
   }
 }
@@ -213,7 +255,7 @@ function drawBorder() {
   droppingEnd = false;
   erasingBorder = false;
   drawingBorder = true;
-  ltc = borderColor
+  ltc = blockedColor
 }
 
 function eraseBorder() {
@@ -221,5 +263,5 @@ function eraseBorder() {
   droppingEnd = false;
   drawingBorder = false;
   erasingBorder = true;
-  ltc = baseColor
+  ltc = eraseColor;
 }

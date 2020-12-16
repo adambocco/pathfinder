@@ -190,6 +190,14 @@ function extractMin() {
             }
         }
     }
+    if (lastMin[0]==indexI && lastMin[1]==indexJ) {
+        dijkstraDone = true
+        finishingDijkstra = false;
+        colors[end[0]][end[1]] = endColor;
+        colors[start[0]][start[1]] = startColor
+        console.log("CANT FIND END!!!")
+    }
+    lastMin = [indexI, indexJ, min]
     inQueue[indexI][indexJ] = true;
 
     return [indexI, indexJ, min];
