@@ -119,6 +119,11 @@ function setup() {
   eraseBorderButton.mousePressed(eraseBorder)
   eraseBorderButton.style('background-color', color(inactiveButtonColor));
 
+  resetMountainsButton = createButton('Erase Mountains')
+  resetMountainsButton.position(650, 3)
+  resetMountainsButton.mousePressed(resetMountains)
+  resetMountainsButton.style('background-color', color(inactiveButtonColor));
+
   resetBorderButton = createButton('Reset Border')
   resetBorderButton.position(550, 26)
   resetBorderButton.mousePressed(resetBorder)
@@ -453,6 +458,19 @@ function resetBorder() {
     for (let b = 0; b < blocked[a].length; b++) {
       if (blocked[a][b]) {
         blocked[a][b] = false;
+        colors[a][b] = baseColor;
+      }
+    }
+  }
+}
+
+function resetMountains() {
+  for (let a = 0; a < coords.length; a++) {
+    for (let b = 0; b < coords[a].length; b++) {
+      if (mountained[a][b]) {
+        mountained[a][b] = false;
+        mountainColors[a][b] = [...mountainStartColor]
+        mountainSlopes[a][b] = 0
         colors[a][b] = baseColor;
       }
     }
