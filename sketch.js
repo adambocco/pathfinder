@@ -32,7 +32,7 @@ let droppingEnd = false;
 let currentAlgorithm = null;
 let ltc = [100, 50, 200]
 let baseColor = [130, 130, 150]
-let blockedColor = [100, 80, 80];
+let blockedColor = [10, 10, 80];
 let eraseColor = [160, 160, 180];
 let startColor = [100, 220, 100];
 let endColor = [220, 100, 100];
@@ -64,6 +64,11 @@ let cantFindEnd = false;
 let dijkstra = false;
 let astar = false;
 let drawingMountains = false;
+let mountained = [];
+let mountainSlopes = [];
+let mountainColors = [];
+let mountainWeight = 20;
+let mountainWeightSlider;
 let priorityQueue = new PriorityQueue()
 
 
@@ -133,11 +138,15 @@ function setup() {
     resetAlgorithmButton, drawBorderButton, eraseBorderButton, resetBorderButton, drawTerrainButton,
     drawMountainsButton]
 
-  speedSlider = createSlider(0, 100, 60, 1)
-  speedSlider.position(100, 709)
+  speedSlider = createSlider(1, 100, 60, 1)
+  speedSlider.position(100, height-10)
 
   drawSlider = createSlider(1, 3, 2, 1)
-  drawSlider.position(350, 709)
+  drawSlider.position(350, height-10)
+
+  mountainWeightSlider = createSlider(1, 100, 60, 1)
+  mountainWeightSlider.position(600, height-10);
+
 }
 
 function draw() {
@@ -176,8 +185,10 @@ function draw() {
   }
   fill(0, 0, 0)
   textSize(15)
-  text("Speed: " + speedSlider.value(), 140, 692)
-  text("Draw Size: " + drawSlider.value(), 385, 692)
+  text("Speed: " + speedSlider.value(), 135, height-20)
+  text("Draw Size: " + drawSlider.value(), 375, height-20)
+  text("Mountain Weight: " + mountainWeightSlider.value(),600, height-20)
+  mountainWeight = 100 - mountainWeightSlider.value();
   if (speedSlider.value() < 50) {
     fastDijkstra = false;
     frameRate(10 + speedSlider.value())
@@ -186,6 +197,61 @@ function draw() {
     fastDijkstra = true;
     frameRate(60)
     processLimit = speedSlider.value() - 50
+  }
+}
+
+function setupSquares() {
+  let x = 0
+  let y = 0;
+  blocked=[];
+  colors = []
+  coords = []
+  mountained = []
+  mountainSlopes = []
+  mountainColors = []
+  for (let i = leftPadding; i < width - rightPadding; i += sqSize) {
+    blocked.push([])
+    colors.push([])
+    coords.push([])
+    mountained.push([])
+    mountainSlopes.push([])
+    mountainColors.push([])
+    y = 0
+    for (let j = topPadding; j < height - bottomPadding; j += sqSize) {
+      colors[x].push(baseColor)
+      coords[x].push([i, j])
+      blocked[x].push(false)
+      mountained[x].push(false)
+      mountainSlopes[x].push(0)
+      mountainColors[x].push([...mountainStartColor])
+      y++;
+    }
+    x++;
+  }
+}
+
+
+function resetSquares() {
+  let x = 0
+  let y = 0;
+  for (let i = leftPadding; i < width - rightPadding; i += sqSize) {
+    colors.push([])
+    coords.push([])
+    y = 0
+    for (let j = topPadding; j < height - bottomPadding; j += sqSize) {
+      if (blocked[x][y]) {
+        colors[x].push(blockedColor)
+      } 
+      else if (mountained[x][y]) {
+        colors[x].push(mountainColors[x][y])
+      }
+      else {
+        colors[x].push(baseColor)
+      }
+      coords[x].push([i, j])
+      y++;
+    }
+    x++;
   }
 }
 
@@ -271,11 +337,7 @@ function selectSquares() {
   }
   else if (drawingTerrain) {
     lastTouched = []
-    if (
-      mouseX < width - rightPadding &&
-      mouseY < height - bottomPadding &&
-      mouseX > leftPadding &&
-      mouseY > topPadding) {
+    if (isMouseInFrame()) {
       console.log("drawingterrain")
       if (drawTerrainPressed && mouseIsPressed) {
         rect(drawTerrainStart[0],
@@ -289,7 +351,59 @@ function selectSquares() {
     }
   }
   else if (drawingMountains) {
+    lastTouched = []
+    if (isMouseInFrame()) {
+      sqx = parseInt((mouseX - leftPadding) / sqSize)
+      sqy = parseInt((mouseY - topPadding) / sqSize)
+      try {
+        let drawSize = drawSlider.value();
+        if (mouseIsPressed) {
+          console.log("drawinmountains")
+          incrementMountain(sqx,sqy)
+          colors[sqx][sqy] = mountainColors[sqx][sqy]
+          if (drawSize > 1) {
+            incrementMountain(sqx+1, sqy)
+            colors[sqx + 1][sqy] = mountainColors[sqx+1][sqy]
+            incrementMountain(sqx-1, sqy)
+            colors[sqx - 1][sqy] = mountainColors[sqx-1][sqy]
+            incrementMountain(sqx, sqy+1)
+            colors[sqx][sqy + 1] = mountainColors[sqx][sqy+1]
+            incrementMountain(sqx, sqy-1)
+            colors[sqx][sqy - 1] = mountainColors[sqx][sqy-1]
+          }
+          if (drawSize > 2) {
+            incrementMountain(sqx+1, sqy+1)
+            colors[sqx + 1][sqy + 1] = mountainColors[sqx+1][sqy+1]
+            incrementMountain(sqx-1, sqy+1)
+            colors[sqx - 1][sqy + 1] = mountainColors[sqx-1][sqy+1]
+            incrementMountain(sqx+1, sqy-1)
+            colors[sqx + 1][sqy - 1] = mountainColors[sqx+1][sqy-1]
+            incrementMountain(sqx-1, sqy-1)
+            colors[sqx - 1][sqy - 1] = mountainColors[sqx-1][sqy-1]
+          }
+        }
+        lastTouched.push([sqx, sqy])
+        if (drawSize > 1) {
+          lastTouched.push([sqx + 1, sqy], [sqx - 1, sqy], [sqx, sqy + 1], [sqx, sqy - 1])
+        }
+        if (drawSize > 2) {
+          lastTouched.push([sqx + 1, sqy + 1], [sqx - 1, sqy + 1], [sqx - 1, sqy - 1], [sqx + 1, sqy - 1])
+        }
+      } catch (err) { console.log(err) }
+    }
+  }
+}
 
+function incrementMountain(x, y) {
+  for (let f = 0; f < 3; f++) {
+    if (mountainColors[x][y][f] > mountainEndColor[f]) {
+      mountainColors[x][y][f]-=8;
+    }
+  }
+  mountained[x][y] = true
+  mountainSlopes[x][y] = 200 - mountainColors[x][y][0];
+  if (mountainSlopes[x][y] == 200) {
+    blocked[x][y] = true
   }
 }
 
@@ -309,50 +423,13 @@ function mousePressed() {
   }
 }
 
-function setupSquares() {
-  let x = 0
-  let y = 0;
-  for (let i = leftPadding; i < width - rightPadding; i += sqSize) {
-    blocked.push([])
-    colors.push([])
-    coords.push([])
-    y = 0
-    for (let j = topPadding; j < height - bottomPadding; j += sqSize) {
-      colors[x].push(baseColor)
-      coords[x].push([i, j])
-      blocked[x].push(false)
-      y++;
-    }
-    x++;
-  }
-}
 
 // Reset Handlers
 
-function resetSquares() {
-  let x = 0
-  let y = 0;
-  for (let i = leftPadding; i < width - rightPadding; i += sqSize) {
-    colors.push([])
-    coords.push([])
-    y = 0
-    for (let j = topPadding; j < height - bottomPadding; j += sqSize) {
-      if (blocked[x][y]) {
-        colors[x].push(blockedColor)
-      } else {
-        colors[x].push(baseColor)
-      }
-      coords[x].push([i, j])
-      y++;
-    }
-    x++;
-  }
-}
-
 function reset() {
-  colors = [];
-  coords = [];
   inQueue = [];
+  colors = []
+  coords = []
   pq = [];
   pi = [];
   dijkstraWhile = false;

@@ -1,6 +1,7 @@
 
 function runDijkstra() {
     if (finishingDijkstra) {
+        lastTouched = []
         finishDijkstra()
     } else {
         for (let k = 0; k < processLimit; k++) {
@@ -115,33 +116,6 @@ function setupDijkstra() {
     ltc = visitingColor
 }
 
-
-// function extractMin(minList) {
-//     let indexI = 0;
-//     let indexJ = 0;
-//     let min = 99999
-//     for (let i = 0; i < pq.length; i++) {
-//         for (let j = 0; j < pq[i].length; j++) {
-//             if (minList[i][j] < min && !inQueue[i][j]) { /// FROM END : astar, PQ : dijksta
-//                 indexI = i;
-//                 indexJ = j;
-//                 min = minList[i][j];                    /// SAME HERE
-//             }
-//         }
-//     }
-//     if (min == 99999) {
-//         dijkstraDone = true
-//         finishingDijkstra = false;
-//         cantFindEnd = true;
-//         colors[end[0]][end[1]] = endColor;
-//         colors[start[0]][start[1]] = startColor
-//         return false
-//     }
-//     inQueue[indexI][indexJ] = true;
-//     return [indexI, indexJ, min];
-// }
-
-
 // Euclidean, TODO: Add more heuristics
 
 function heuristic(node) {
@@ -187,13 +161,12 @@ function relaxFast() {
 }
 
 function visitAdjacents() {
-
     switch (dijkstraI) {
         case 0:
             if (blocked[u[0] + 1][u[1]]) { break; }
             colors[u[0] + 1][u[1]] = [rVar, gVar, bVar];
-            if (pq[u[0] + 1][u[1]] > (pq[u[0]][u[1]]) + 1) {
-                pq[u[0] + 1][u[1]] = (pq[u[0]][u[1]]) + 1
+            if (pq[u[0] + 1][u[1]] > (pq[u[0]][u[1]]) + 1 + (mountained[u[0]+1][u[1]] ? mountainSlopes[u[0]+1][u[1]]/mountainWeight : 0)) {
+                pq[u[0] + 1][u[1]] = (pq[u[0]][u[1]]) + 1 + (mountained[u[0]+1][u[1]] ? mountainSlopes[u[0]+1][u[1]]/mountainWeight : 0)
                 pi[u[0] + 1][u[1]] = [u[0], u[1]]
                 if (dijkstra) {
                     priorityQueue.enqueue([u[0]+1, u[1], pq[u[0] + 1][u[1]]])
@@ -206,8 +179,8 @@ function visitAdjacents() {
         case 1:
             if (blocked[u[0] - 1][u[1]]) { break; }
             colors[u[0] - 1][u[1]] = [rVar, gVar, bVar];
-            if (pq[u[0] - 1][u[1]] > (pq[u[0]][u[1]]) + 1) {
-                pq[u[0] - 1][u[1]] = (pq[u[0]][u[1]]) + 1
+            if (pq[u[0] - 1][u[1]] > (pq[u[0]][u[1]]) + 1  + (mountained[u[0]-1][u[1]] ? mountainSlopes[u[0]-1][u[1]]/mountainWeight : 0)) {
+                pq[u[0] - 1][u[1]] = (pq[u[0]][u[1]]) + 1  + (mountained[u[0]-1][u[1]] ? mountainSlopes[u[0]-1][u[1]]/mountainWeight : 0)
                 pi[u[0] - 1][u[1]] = [u[0], u[1]]
                 if (dijkstra) {
                     priorityQueue.enqueue([u[0]-1, u[1],pq[u[0] - 1][u[1]]])
@@ -220,8 +193,8 @@ function visitAdjacents() {
         case 2:
             if (blocked[u[0]][u[1] + 1]) { break; }
             colors[u[0]][u[1] + 1] = [rVar, gVar, bVar];
-            if (pq[u[0]][u[1] + 1] > (pq[u[0]][u[1]]) + 1) {
-                pq[u[0]][u[1] + 1] = (pq[u[0]][u[1]]) + 1
+            if (pq[u[0]][u[1] + 1] > (pq[u[0]][u[1]]) + 1 + (mountained[u[0]][u[1]+1] ? mountainSlopes[u[0]][u[1]+1]/mountainWeight : 0)) {
+                pq[u[0]][u[1] + 1] = (pq[u[0]][u[1]]) + 1 + (mountained[u[0]][u[1]+1] ? mountainSlopes[u[0]][u[1]+1]/mountainWeight : 0)
                 pi[u[0]][u[1] + 1] = [u[0], u[1]]
                 if (dijkstra) {
                     priorityQueue.enqueue([u[0], u[1]+1, pq[u[0]][u[1]+1]])
@@ -234,8 +207,8 @@ function visitAdjacents() {
         case 3:
             if (blocked[u[0]][u[1] - 1]) { break; }
             colors[u[0]][u[1] - 1] = [rVar, gVar, bVar];
-            if (pq[u[0]][u[1] - 1] > (pq[u[0]][u[1]]) + 1) {
-                pq[u[0]][u[1] - 1] = (pq[u[0]][u[1]]) + 1
+            if (pq[u[0]][u[1] - 1] > (pq[u[0]][u[1]]) + 1  + (mountained[u[0]][u[1]-1] ? mountainSlopes[u[0]+1][u[1]-1]/mountainWeight : 0)) {
+                pq[u[0]][u[1] - 1] = (pq[u[0]][u[1]]) + 1  + (mountained[u[0]][u[1]-1] ? mountainSlopes[u[0]+1][u[1]-1]/mountainWeight : 0)
                 pi[u[0]][u[1] - 1] = [u[0], u[1]]
                 if (dijkstra) {
                     priorityQueue.enqueue([u[0], u[1]-1, pq[u[0]][u[1]-1]])
@@ -248,8 +221,8 @@ function visitAdjacents() {
         case 4:
             if (blocked[u[0] + 1][u[1] + 1]) { break; }
             colors[u[0] + 1][u[1] + 1] = [rVar, gVar, bVar];
-            if (pq[u[0] + 1][u[1] + 1] > (pq[u[0]][u[1]]) + 1.4) {
-                pq[u[0] + 1][u[1] + 1] = (pq[u[0]][u[1]]) + 1.4
+            if (pq[u[0] + 1][u[1] + 1] > (pq[u[0]][u[1]]) + 1.4  + (mountained[u[0]+1][u[1]+1] ? mountainSlopes[u[0]+1][u[1]+1]/mountainWeight : 0)) {
+                pq[u[0] + 1][u[1] + 1] = (pq[u[0]][u[1]]) + 1.4  + (mountained[u[0]+1][u[1]+1] ? mountainSlopes[u[0]+1][u[1]+1]/mountainWeight : 0)
                 pi[u[0] + 1][u[1] + 1] = [u[0], u[1]]
                 if (dijkstra) {
                     priorityQueue.enqueue([u[0]+1, u[1]+1, pq[u[0]+1][u[1]+1]])
@@ -262,8 +235,8 @@ function visitAdjacents() {
         case 5:
             if (blocked[u[0] - 1][u[1] - 1]) { break; }
             colors[u[0] - 1][u[1] - 1] = [rVar, gVar, bVar];
-            if (pq[u[0] - 1][u[1] - 1] > (pq[u[0]][u[1]]) + 1.4) {
-                pq[u[0] - 1][u[1] - 1] = (pq[u[0]][u[1]]) + 1.4
+            if (pq[u[0] - 1][u[1] - 1] > (pq[u[0]][u[1]]) + 1.4  + (mountained[u[0]-1][u[1]-1] ? mountainSlopes[u[0]-1][u[1]-1]/mountainWeight: 0)) {
+                pq[u[0] - 1][u[1] - 1] = (pq[u[0]][u[1]]) + 1.4  + (mountained[u[0]-1][u[1]-1] ? mountainSlopes[u[0]-1][u[1]-1]/mountainWeight: 0)
                 pi[u[0] - 1][u[1] - 1] = [u[0], u[1]]
                 if (dijkstra) {
                     priorityQueue.enqueue([u[0]-1, u[1]-1, pq[u[0]-1][u[1]-1]])
@@ -276,8 +249,8 @@ function visitAdjacents() {
         case 6:
             if (blocked[u[0] - 1][u[1] + 1]) { break; }
             colors[u[0] - 1][u[1] + 1] = [rVar, gVar, bVar];
-            if (pq[u[0] - 1][u[1] + 1] > (pq[u[0]][u[1]]) + 1.4) {
-                pq[u[0] - 1][u[1] + 1] = (pq[u[0]][u[1]]) + 1.4
+            if (pq[u[0] - 1][u[1] + 1] > (pq[u[0]][u[1]]) + 1.4  + (mountained[u[0]-1][u[1]+1] ? mountainSlopes[u[0]-1][u[1]+1]/mountainWeight : 0)) {
+                pq[u[0] - 1][u[1] + 1] = (pq[u[0]][u[1]]) + 1.4  + (mountained[u[0]-1][u[1]+1] ? mountainSlopes[u[0]-1][u[1]+1]/mountainWeight : 0)
                 pi[u[0] - 1][u[1] + 1] = [u[0], u[1]]
                 if (dijkstra) {
                     priorityQueue.enqueue([u[0]-1, u[1]+1, pq[u[0]-1][u[1]+1]])
@@ -290,8 +263,8 @@ function visitAdjacents() {
         case 7:
             if (blocked[u[0] + 1][u[1] - 1]) { break; }
             colors[u[0] + 1][u[1] - 1] = [rVar, gVar, bVar];
-            if (pq[u[0] + 1][u[1] - 1] > (pq[u[0]][u[1]]) + 1.4) {
-                pq[u[0] + 1][u[1] - 1] = (pq[u[0]][u[1]]) + 1.4
+            if (pq[u[0] + 1][u[1] - 1] > (pq[u[0]][u[1]]) + 1.4  + (mountained[u[0]+1][u[1]-1] ? mountainSlopes[u[0]+1][u[1]-1]/mountainWeight : 0)) {
+                pq[u[0] + 1][u[1] - 1] = (pq[u[0]][u[1]]) + 1.4  + (mountained[u[0]+1][u[1]-1] ? mountainSlopes[u[0]+1][u[1]-1]/mountainWeight : 0)
                 pi[u[0] + 1][u[1] - 1] = [u[0], u[1]]
                 if (dijkstra) {
                     priorityQueue.enqueue([u[0]+1, u[1]-1, pq[u[0]+1][u[1]-1]])
