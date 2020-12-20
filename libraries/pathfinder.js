@@ -1,24 +1,22 @@
 
-function runDijkstra() {
-    if (finishingDijkstra) {
-        lastTouched = []
-        finishDijkstra()
+function runAlgorithm() {
+    if (finishingAlgorithm) {
+        finishAlgorithm()
     } else {
         for (let k = 0; k < processLimit; k++) {
-            if (!dijkstraDone) {
-                
+            if (!algorithmDone) {
                 if (pq[end[0]][end[1]] < 99999) {
-                    finishingDijkstra = true
+                    finishingAlgorithm = true
                     par = [end[0], end[1]]
                     par = pi[par[0]][par[1]]
                     colors[end[0]][end[1]] = endColor;
                     colors[start[0]][start[1]] = startColor
                 }
-                else if (dijkstraWhile) {
+                else if (algorithmWhile) {
                     u = priorityQueue.dequeue()[0]
                     if ( !u || u.length==0) { 
                         cantFindEnd = true;
-                        dijkstraDone = true;
+                        algorithmDone = true;
                         return 
                     }
                     colors[u[0]][u[1]] = uColor;
@@ -28,10 +26,10 @@ function runDijkstra() {
                         }
                         uColorDir[m] ? uColor[m]++:uColor[m]--;
                     }
-                    dijkstraWhile = false;
-                    dijkstraFor = true;
-                } else if (dijkstraFor) {
-                    if (fastDijkstra) {
+                    algorithmFor = true
+                    algorithmWhile = false;
+                } else if (algorithmFor) {
+                    if (fastAlgorithm) {
                         relaxFast()
                     } else {
                         relaxSlow()
@@ -45,34 +43,25 @@ function runDijkstra() {
 }
 
 function startDijkstra() {
-    if (start==null || end==null) {
-        return
-    }
-    setupDijkstra()
+    let ready = setupAlgorithm()
+    if (!ready) {return}
     dijkstra = true;
-    astar = false;
-    dijkstraWhile = true;
-    dijkstraFor = false;
-    dijkstraDone = false;
-    finishingDijkstra = false;
-    currentAlgorithm = runDijkstra;
+
 }
 function startAstar() {
-    if (start==null || end==null) {
-        return
-    }
-    setupDijkstra()
-    dijkstra = false;
+    let ready = setupAlgorithm()
+    if (!ready) {return}
     astar = true;
-    dijkstraWhile = true;
-    dijkstraFor = false;
-    dijkstraDone = false;
-    finishingDijkstra = false;
-    currentAlgorithm = runDijkstra;
+}
+
+function startBfs() {
+    let ready = setupAlgorithm()
+    if (!ready) {return}
+    bfs = true
 }
 
 
-function finishDijkstra() {
+function finishAlgorithm() {
     let done = true
     if (par[0] != start[0] || par[1] != start[1]) {
         colors[par[0]][par[1]] = [255, 255, 25];
@@ -81,39 +70,45 @@ function finishDijkstra() {
     }
     colors[par[0]][par[1]] = [255, 255, 255];
     if (done) {
-        dijkstraDone = true
-        finishingDijkstra = false;
+        algorithmDone = true
+        finishingAlgorithm = false;
         colors[end[0]][end[1]] = endColor;
         colors[start[0]][start[1]] = startColor
     }
 }
 
-function setupDijkstra() {
-    inQueue = [];
+function setupAlgorithm() {
+    if (start==null || end==null) {return false}
+    dijkstra = false;
+    astar = false;
+    bfs = false
+    algorithmWhile = true;
+    algorithmFor = false;
+    algorithmDone = false;
+    finishingAlgorithm = false;
+    running = true;
     pq = [];
     pi = [];
-    fromEnd = [];
+    visited = []
     for (let i = 0; i < coords.length; i++) {
         pq.push([])
         pi.push([])
-        fromEnd.push([])
-        inQueue.push([])
+        visited.push([])
         for (let j = 0; j < coords[0].length; j++) {
             if (start[0] == i && start[1] == j) {
                 pq[i].push(0)
                 pi[i].push(null);
                 priorityQueue.enqueue([i, j, 0])
-                inQueue[i].push(false)
-                fromEnd[i].push(heuristic(start))
+                visited[i].push(true)
                 continue
             }
             pq[i].push(99999)
             pi[i].push(null)
-            inQueue[i].push(false)
-            fromEnd[i].push(99999)
+            visited[i].push(false)
         }
     }
     ltc = visitingColor
+    return true;
 }
 
 // Euclidean, TODO: Add more heuristics
@@ -123,45 +118,58 @@ function heuristic(node) {
 }
 
 function relaxSlow() {
-    if (dijkstraI == 8) {
-        dijkstraFor = false
-        dijkstraWhile = true
+    if (algorithmI >=8) {
+        algorithmFor = false
+        algorithmWhile = true
         rVar -= rIncr;
         gVar -= gIncr;
         bVar -= bIncr;
-        dijkstraI = 0
-        lastTouched=[]
+        algorithmI = 0
     }
     else {
         try {
             visitAdjacents()
-            dijkstraI++;
+            algorithmI++;
         } catch (err) {
-            dijkstraI++;
+            algorithmI++;
         }
     }
 }
 
 function relaxFast() {
-    dijkstraI = 0
-    lastTouched = []
-    while (dijkstraI != 8) {
+    algorithmI = 0
+    while (algorithmI < 8) {
         try {
             visitAdjacents()
-            dijkstraI++;
+            algorithmI++;
         } catch (err) {
-            dijkstraI++;
+            algorithmI++;
         }
-        dijkstraFor = false
-        dijkstraWhile = true
-        rVar -= rIncr;
-        gVar -= gIncr;
-        bVar -= bIncr;
+        incrementColors()
     }
+    algorithmFor = false
+    algorithmWhile = true
+}
+
+function incrementColors() {
+    if (rVar < 1 || rVar > 255) {
+        rDir = !rDir
+    }
+    rDir? rVar-=rIncr: rVar+=rIncr;
+
+    if (gVar < 1 || gVar > 255) {
+        gDir = !gDir
+    }
+    gDir? gVar-=gIncr: gVar+=gIncr;
+
+    if (bVar < 1 || rVar > 255) {
+        bDir = !bDir
+    }
+    bDir? bVar-=bIncr: bVar+=bIncr;
 }
 
 function visitAdjacents() {
-    switch (dijkstraI) {
+    switch (algorithmI) {
         case 0:
             if (blocked[u[0] + 1][u[1]]) { break; }
             colors[u[0] + 1][u[1]] = [rVar, gVar, bVar];
@@ -172,6 +180,10 @@ function visitAdjacents() {
                     priorityQueue.enqueue([u[0]+1, u[1], pq[u[0] + 1][u[1]]])
                 } else if (astar) {
                     priorityQueue.enqueue([u[0]+1, u[1], heuristic([u[0] + 1, u[1]]) + pq[u[0] + 1][u[1]]])
+                } 
+                else if (bfs && !visited[u[0]+1][u[1]]) {
+                    visited[u[0]][u[1]] = true
+                    priorityQueue.push([u[0]+1, u[1], pq[u[0] + 1][u[1]]])
                 }
                 lastTouched.push([u[0]+1,u[1]])
             }
@@ -187,6 +199,10 @@ function visitAdjacents() {
                 } else if (astar){
                     priorityQueue.enqueue([u[0]-1, u[1], heuristic([u[0] - 1, u[1]]) + pq[u[0] - 1][u[1]]])
                 }
+                else if (bfs &&  !visited[u[0]-1][u[1]]) {
+                    visited[u[0]][u[1]] = true
+                    priorityQueue.push([u[0]-1, u[1], pq[u[0] - 1][u[1]]])
+                }
                 lastTouched.push([u[0]-1,u[1]])
             }
             break;
@@ -200,6 +216,10 @@ function visitAdjacents() {
                     priorityQueue.enqueue([u[0], u[1]+1, pq[u[0]][u[1]+1]])
                 } else if (astar) {
                     priorityQueue.enqueue([u[0], u[1]+1, heuristic([u[0], u[1]+1]) + pq[u[0]][u[1]+1]])
+                }
+                else if (bfs &&  !visited[u[0]][u[1]+1]) {
+                    visited[u[0]][u[1]] = true
+                    priorityQueue.push([u[0], u[1]+1, pq[u[0]][u[1]+1]])
                 }
                 lastTouched.push([u[0],u[1]+1])
             }
@@ -215,6 +235,10 @@ function visitAdjacents() {
                 } else if (astar) {
                     priorityQueue.enqueue([u[0], u[1]-1, heuristic([u[0], u[1]-1]) + pq[u[0]][u[1]-1]])
                 }
+                else if (bfs &&  !visited[u[0]][u[1]-1]) {
+                    visited[u[0]][u[1]] = true
+                    priorityQueue.push([u[0], u[1]-1, pq[u[0]][u[1]-1]])
+                }
                 lastTouched.push([u[0],u[1]-1])
             }
             break;
@@ -228,6 +252,10 @@ function visitAdjacents() {
                     priorityQueue.enqueue([u[0]+1, u[1]+1, pq[u[0]+1][u[1]+1]])
                 } else if (astar) {
                     priorityQueue.enqueue([u[0]+1, u[1]+1, heuristic([u[0]+1, u[1]+1]) + pq[u[0]+1][u[1]+1]])
+                }
+                else if (bfs && !visited[u[0]+1][u[1]+1]) {
+                    visited[u[0]][u[1]] = true
+                    priorityQueue.push([u[0]+1, u[1]+1, pq[u[0]+1][u[1]+1]])
                 }
                 lastTouched.push([u[0]+1,u[1]+1])
             }
@@ -243,6 +271,10 @@ function visitAdjacents() {
                 } else if (astar) {
                     priorityQueue.enqueue([u[0]-1, u[1]-1, heuristic([u[0]-1, u[1]-1]) + pq[u[0]-1][u[1]-1]])
                 }
+                else if (bfs &&  !visited[u[0]-1][u[1]-1]) {
+                    visited[u[0]][u[1]] = true
+                    priorityQueue.push([u[0]-1, u[1]-1, pq[u[0]-1][u[1]-1]])
+                }
                 lastTouched.push([u[0]-1,u[1]-1])
             }
             break;
@@ -256,6 +288,10 @@ function visitAdjacents() {
                     priorityQueue.enqueue([u[0]-1, u[1]+1, pq[u[0]-1][u[1]+1]])
                 } else if (astar) {
                     priorityQueue.enqueue([u[0]-1, u[1]+1, heuristic([u[0]-1, u[1]+1]) + pq[u[0]-1][u[1]+1]])
+                }
+                else if (bfs &&!visited[u[0]-1][u[1]+1]) {
+                    visited[u[0]][u[1]] = true
+                    priorityQueue.push([u[0]-1, u[1]+1, pq[u[0]-1][u[1]+1]])
                 }
                 lastTouched.push([u[0]-1,u[1]+1])
             }
@@ -271,9 +307,12 @@ function visitAdjacents() {
                 } else if (astar) {
                     priorityQueue.enqueue([u[0]+1, u[1]-1, heuristic([u[0]+1, u[1]-1]) + pq[u[0]+1][u[1]-1]])
                 }
+                else if (bfs && !visited[u[0]+1][u[1]-1]) {
+                    visited[u[0]][u[1]] = true
+                    priorityQueue.push([u[0]+1, u[1]-1, pq[u[0]+1][u[1]-1]])
+                }
                 lastTouched.push([u[0]+1,u[1]-1])
             }
             break;
-
     }
 }

@@ -15,6 +15,10 @@ class PriorityQueue {
         return this.arr.splice(0,1)
     }
 
+    push(node) {
+        this.arr.push(node);
+    }
+
     printQueue() {
         console.log(this.arr)
     }
